@@ -1,0 +1,5 @@
+<table>
+	<tr *ngFor="let row of puzzle; let i = index">
+		<td *ngFor="let col of row; let j = index" (click)="cascade(i + '-' + j)" class="cell{{ col }}"></td>
+	</tr>
+</table>
