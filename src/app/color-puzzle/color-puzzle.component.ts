@@ -10,12 +10,14 @@ export class ColorPuzzleComponent implements OnInit {
 	puzzle: Array<Array<number>>;
 	complete = false;
 	numberCompleted = 0;
+	quietPatterns = [[[0,1],[0,3],[1,1],[1,3],[2,0],[2,1],[2,2],[2,3],[2,4],[3,1],[3,3],[4,1],[4,3]],[[0,2],[1,0],[1,1],[1,2],[1,3],[1,4], [2,2],[3,0],[3,1],[3,2],[3,3],[3,4],[4,2]]];
+	quietIntersections = [[1,1], [1,3], [2,2], [3,1], [3,3]]
 
 
 	constructor() { }
 
 	ngOnInit() {
-		this.choosePuzzle();
+		this.puzzle = this.generatePuzzle();
 	}
 
 	clickSquare(position: string){
@@ -56,64 +58,103 @@ export class ColorPuzzleComponent implements OnInit {
 		if(pos[0] + 1 < this.puzzle.length){
 			this.puzzle[pos[0] + 1][pos[1]] = (this.puzzle[pos[0] + 1][pos[1]] + 1) % 2;
 		}
-		// for(var i = 0; i < this.puzzle[pos[0]].length; i ++){
-		// 	if(this.puzzle[pos[0]][i]){
-		// 		this.puzzle[pos[0]][i] = 0;
-		// 	}
-		// 	else{
-		// 		this.puzzle[pos[0]][i] = 1;
-		// 	}
-		// }
-		//
-		// for(var i = 0; i < this.puzzle.length; i++){
-		// 	if(i.toString() === pos[0]){
-		// 		continue;
-		// 	}
-		// 	if(this.puzzle[i][pos[1]]){
-		// 		this.puzzle[i][pos[1]] = 0;
-		// 	}
-		// 	else{
-		// 		this.puzzle[i][pos[1]] = 1;
-		// 	}
-		// }
 	}
 
 	//randomize starting red squares using the number os squares given, default to 3
 
-	// randomStart(num = 3){
-	// 	var rows = this.puzzle.length;
-	// 	var columns = this.puzzle[0].length;
-	// 	var size = rows * columns;
-	// 	var positions = [];
-	//
-	// 	//clear previous squares
-	// 	for(var i = 0; i < this.puzzle.length; i++){
-	// 		for(var j = 0; j < this.puzzle[i].length; j++){
-	// 			this.puzzle[i][j] = 0;
-	// 		}
-	// 	}
-	//
-	// 	//generate random starting red squares
-	//
-	// 	while(positions.length < num){
-	// 		var rando = Math.floor(Math.random() * size);
-	// 		if(!positions.includes(rando)){
-	// 			positions.push(rando);
-	// 		}
-	// 	}
-	//
-	// 	for(var i = 0; i < positions.length; i++){
-	// 		var row = Math.floor(positions[i] / rows);
-	// 		var col = positions[i] % columns;
-	// 		this.puzzle[row][col] = 1;
-	// 	}
-	//
-	// }
+	randomStart(){
+		var arr = [[0, 0, 0, 0, 0],	[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
+		var rows = arr.length;
+		var columns = arr[0].length;
+		var size = rows * columns;
+		var positions = [];
+		var num = Math.floor(Math.random() * (size + 1));
+
+		//generate random starting red squares
+
+		while(positions.length < num){
+			var rando = Math.floor(Math.random() * size);
+			if(!positions.includes(rando)){
+				positions.push(rando);
+			}
+		}
+
+		for(var i = 0; i < positions.length; i++){
+			var row = Math.floor(positions[i] / rows);
+			var col = positions[i] % columns;
+			arr[row][col] = 1;
+		}
+
+		return arr
+
+	}
+
+	//there are two 'quiet' patterns, if there are an even number of lights on in each of these patterns the puzzle is solvable
+	checkQuiet(arr, pattern){
+		var lights = 0;
+		for(var i = 0; i < pattern.length; i++){
+			if(arr[pattern[i][0]][pattern[i][1]]){
+				lights++;
+			}
+		}
+		if(lights % 2 === 0){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 
 	choosePuzzle(){
 		this.complete = false;
 		var puzNum = Math.floor(Math.random() * this.knownPuzzles.length);
 		this.puzzle = this.knownPuzzles[puzNum].slice();
+	}
+
+	generatePuzzle(){
+		var newPuzzle = this.randomStart();
+		//check the two patterns, setting quiet1 and quiet2 to true or false
+		var quiet1 = this.checkQuiet(newPuzzle, this.quietPatterns[0]);
+		var quiet2 = this.checkQuiet(newPuzzle, this.quietPatterns[1]);
+
+		//if neither of the quiet patterns is good, either change one point where the two patterns intersect, or change one in each pattern where they do not intersect
+		if(!quiet1 && !quiet2){
+			if(Math.floor(Math.random() * 2)){
+				var pos = this.quietIntersections[Math.floor(Math.random() * this.quietIntersections.length)];
+				newPuzzle[pos[0]][pos[1]] %= 2;
+			}
+			else{
+				var pos = this.quietPatterns[0][Math.floor(Math.random() * this.quietPatterns[0].length)];
+				while(this.quietIntersections.includes(pos)){
+					pos = this.quietPatterns[0][Math.floor(Math.random() * this.quietPatterns[0].length)]
+				}
+				newPuzzle[pos[0]][pos[1]] %= 2;
+
+				pos = this.quietPatterns[1][Math.floor(Math.random() * this.quietPatterns[1].length)];
+				while(this.quietIntersections.includes(pos)){
+					pos = this.quietPatterns[1][Math.floor(Math.random() * this.quietPatterns[1].length)]
+				}
+				newPuzzle[pos[0]][pos[1]] %= 2;
+			}
+		}
+		//else if the first quiet pattern is not good, change a light where it does not interesect with the second pattern
+		else if(!quiet1){
+			var pos = this.quietPatterns[0][Math.floor(Math.random() * this.quietPatterns[0].length)];
+			while(this.quietIntersections.includes(pos)){
+				pos = this.quietPatterns[0][Math.floor(Math.random() * this.quietPatterns[0].length)]
+			}
+			newPuzzle[pos[0]][pos[1]] %= 2;
+		}
+		//else if the second quiet pattern is not good, change a light where it does not interesect with the first pattern
+		else if(!quiet2){
+			var pos = this.quietPatterns[1][Math.floor(Math.random() * this.quietPatterns[1].length)];
+			while(this.quietIntersections.includes(pos)){
+				pos = this.quietPatterns[1][Math.floor(Math.random() * this.quietPatterns[1].length)]
+			}
+			newPuzzle[pos[0]][pos[1]] %= 2;
+		}
+
+		return newPuzzle;
 	}
 
 	solvePuzzle(arr){
