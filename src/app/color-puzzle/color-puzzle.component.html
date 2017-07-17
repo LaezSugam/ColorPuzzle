@@ -1,7 +1,7 @@
 <!-- {{ knownPuzzles | json }} -->
-<p *ngIf="complete">Congratulations, you have completed {{ numberCompleted }} puzzle<span *ngIf="numberCompleted > 1">s</span>! <button type="button" name="newPuzzle" (click)="choosePuzzle()">Play Again!</button></p>
+<p *ngIf="complete">Congratulations, you have completed {{ numberCompleted }} puzzle<span *ngIf="numberCompleted > 1">s</span>! <button type="button" name="newPuzzle" (click)="generatePuzzle()">Play Again!</button></p>
 
-<button type="button" name="newPuzzle" (click)="choosePuzzle()">Generate New Puzzle</button>
+<button type="button" name="newPuzzle" (click)="generatePuzzle()">Generate New Puzzle</button>
 <table>
 	<tr *ngFor="let row of puzzle; let i = index">
 		<td *ngFor="let col of row; let j = index" (click)="clickSquare(i + '-' + j)" class="cell{{ col }}"></td>
